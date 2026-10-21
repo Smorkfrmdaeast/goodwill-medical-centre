@@ -1,0 +1,6 @@
+{
+  "name": "Goodwill Medical Centre - Abakpa, Enugu",
+  "description": "Hospital website concept and appointment enquiry platform for Goodwill Medical Centre in Abakpa, Enugu State, Nigeria.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
