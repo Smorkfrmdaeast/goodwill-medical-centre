@@ -19,7 +19,7 @@ import {
   BookOpen,
   Star
 } from 'lucide-react';
-import { HOSPITAL_INFO, HOSPITAL_SERVICES, HEALTH_ARTICLES, STAFF_PLACEHOLDERS } from '../data/hospitalData.ts';
+import { HOSPITAL_INFO, HOSPITAL_SERVICES, HEALTH_ARTICLES, STAFF_PLACEHOLDERS, type HealthArticle } from '../data/hospitalData.ts';
 import { QuickContactStrip } from '../components/QuickContactStrip.tsx';
 import { AppointmentForm } from '../components/AppointmentForm.tsx';
 import { PageId } from '../components/Navbar.tsx';

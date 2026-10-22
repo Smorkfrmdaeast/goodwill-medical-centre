@@ -74,7 +74,7 @@ export const AdminView: React.FC<AdminViewProps> = ({
   // Payments & Accounts state
   const [payments, setPayments] = useState<PaymentTransaction[]>([]);
   const [paymentSearch, setPaymentSearch] = useState('');
-  const [paymentStatusFilter, setPaymentStatusFilter] = useState<'all' | 'Verified' | 'Pending Verification'>('all');
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState<'all' | 'Successful' | 'Pending Verification'>('all');
   const [selectedReceiptPayment, setSelectedReceiptPayment] = useState<PaymentTransaction | null>(null);
 
   // Publishing form states
@@ -944,12 +944,12 @@ export const AdminView: React.FC<AdminViewProps> = ({
                 <p className="text-2xl font-bold text-emerald-700 mt-2 font-mono">
                   {formatNaira(
                     payments
-                      .filter((p) => p.status === 'Verified')
+                      .filter((p) => p.status === 'Successful')
                       .reduce((acc, p) => acc + p.amount, 0)
                   )}
                 </p>
                 <span className="text-[11px] text-emerald-600 mt-1 block">
-                  {payments.filter((p) => p.status === 'Verified').length} confirmed receipts
+                  {payments.filter((p) => p.status === 'Successful').length} confirmed receipts
                 </span>
               </div>
 
@@ -1000,7 +1000,7 @@ export const AdminView: React.FC<AdminViewProps> = ({
                 <Filter className="w-4 h-4 text-slate-500" aria-hidden="true" />
                 <span className="text-xs text-slate-600 font-semibold">Filter:</span>
                 <div className="flex items-center gap-1.5" role="group" aria-label="Filter transactions by verification status">
-                  {(['all', 'Verified', 'Pending Verification'] as const).map((filter) => (
+                  {(['all', 'Successful', 'Pending Verification'] as const).map((filter) => (
                     <button
                       key={filter}
                       onClick={() => setPaymentStatusFilter(filter)}
@@ -1010,7 +1010,7 @@ export const AdminView: React.FC<AdminViewProps> = ({
                           : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                       }`}
                     >
-                      {filter === 'all' ? 'All Transactions' : filter}
+                      {filter === 'all' ? 'All Transactions' : filter === 'Successful' ? 'Verified / Successful' : filter}
                     </button>
                   ))}
                 </div>
@@ -1049,8 +1049,9 @@ export const AdminView: React.FC<AdminViewProps> = ({
                   const matchQuery =
                     !paymentSearch.trim() ||
                     p.patientName.toLowerCase().includes(paymentSearch.toLowerCase()) ||
-                    p.referenceNumber.toLowerCase().includes(paymentSearch.toLowerCase()) ||
-                    p.phoneNumber.includes(paymentSearch) ||
+                    p.receiptNumber.toLowerCase().includes(paymentSearch.toLowerCase()) ||
+                    p.transactionReference.toLowerCase().includes(paymentSearch.toLowerCase()) ||
+                    p.patientPhone.includes(paymentSearch) ||
                     p.category.toLowerCase().includes(paymentSearch.toLowerCase());
                   return matchStatus && matchQuery;
                 });
@@ -1081,7 +1082,7 @@ export const AdminView: React.FC<AdminViewProps> = ({
                         {filtered.map((trx) => (
                           <tr key={trx.id} className="hover:bg-slate-50/70 transition-colors">
                             <td className="py-3.5 px-4 font-mono font-semibold text-[#0f2d59]">
-                              <div>{trx.referenceNumber}</div>
+                              <div>{trx.receiptNumber}</div>
                               <span className="text-[11px] font-normal text-slate-500 font-sans block">
                                 {new Date(trx.createdAt).toLocaleDateString('en-GB', {
                                   day: 'numeric',
@@ -1094,25 +1095,25 @@ export const AdminView: React.FC<AdminViewProps> = ({
                             </td>
                             <td className="py-3.5 px-4">
                               <div className="font-semibold text-slate-900">{trx.patientName}</div>
-                              <div className="text-xs text-slate-500">{trx.phoneNumber}</div>
+                              <div className="text-xs text-slate-500">{trx.patientPhone}</div>
                             </td>
                             <td className="py-3.5 px-4">
                               <span className="inline-block px-2 py-0.5 rounded text-[11px] font-semibold bg-blue-50 text-[#0f2d59] border border-blue-200">
                                 {trx.category}
                               </span>
-                              {trx.notes && (
+                              {trx.description && (
                                 <p className="text-[11px] text-slate-500 mt-0.5 italic truncate max-w-xs">
-                                  {trx.notes}
+                                  {trx.description}
                                 </p>
                               )}
                             </td>
                             <td className="py-3.5 px-4 text-slate-700">
                               <span className="text-xs font-medium">
-                                {trx.paymentMethod === 'Card'
+                                {trx.paymentMethod === 'debit_card'
                                   ? 'Debit Card (Online)'
-                                  : trx.paymentMethod === 'Bank Transfer'
+                                  : trx.paymentMethod === 'bank_transfer'
                                   ? 'Direct Bank Transfer'
-                                  : trx.paymentMethod === 'USSD'
+                                  : trx.paymentMethod === 'ussd'
                                   ? 'USSD Code'
                                   : 'Pay on Arrival'}
                               </span>
@@ -1123,12 +1124,12 @@ export const AdminView: React.FC<AdminViewProps> = ({
                             <td className="py-3.5 px-4 text-center">
                               <span
                                 className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${
-                                  trx.status === 'Verified'
+                                  trx.status === 'Successful'
                                     ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
                                     : 'bg-amber-50 text-amber-800 border border-amber-200'
                                 }`}
                               >
-                                {trx.status === 'Verified' ? (
+                                {trx.status === 'Successful' ? (
                                   <>
                                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
                                     <span>Verified</span>
@@ -1145,7 +1146,7 @@ export const AdminView: React.FC<AdminViewProps> = ({
                               <div className="flex items-center justify-end gap-1.5">
                                 <button
                                   onClick={() => setSelectedReceiptPayment(trx)}
-                                  aria-label={`View official receipt slip for ${trx.referenceNumber}`}
+                                  aria-label={`View official receipt slip for ${trx.receiptNumber}`}
                                   className="px-2.5 py-1.5 text-xs font-semibold text-[#0f2d59] bg-blue-50 hover:bg-blue-100 rounded-md transition-colors cursor-pointer"
                                   title="View official receipt slip"
                                 >
@@ -1155,17 +1156,17 @@ export const AdminView: React.FC<AdminViewProps> = ({
                                   onClick={() =>
                                     handleTogglePaymentStatus(
                                       trx.id,
-                                      trx.status === 'Verified' ? 'Pending Verification' : 'Verified'
+                                      trx.status === 'Successful' ? 'Pending Verification' : 'Successful'
                                     )
                                   }
-                                  aria-label={`Toggle verification status for receipt ${trx.referenceNumber}`}
+                                  aria-label={`Toggle verification status for receipt ${trx.receiptNumber}`}
                                   className={`px-2.5 py-1.5 text-xs font-semibold rounded-md transition-colors cursor-pointer ${
-                                    trx.status === 'Verified'
+                                    trx.status === 'Successful'
                                       ? 'text-amber-800 bg-amber-50 hover:bg-amber-100'
                                       : 'text-emerald-800 bg-emerald-50 hover:bg-emerald-100'
                                   }`}
                                 >
-                                  {trx.status === 'Verified' ? 'Mark Pending' : 'Verify'}
+                                  {trx.status === 'Successful' ? 'Mark Pending' : 'Verify'}
                                 </button>
                               </div>
                             </td>
@@ -1205,7 +1206,7 @@ export const AdminView: React.FC<AdminViewProps> = ({
                   <div className="space-y-2 text-xs">
                     <div className="flex justify-between py-1 border-b border-slate-100">
                       <span className="text-slate-500">Receipt Ref:</span>
-                      <span className="font-mono font-bold text-slate-900">{selectedReceiptPayment.referenceNumber}</span>
+                      <span className="font-mono font-bold text-slate-900">{selectedReceiptPayment.receiptNumber}</span>
                     </div>
                     <div className="flex justify-between py-1 border-b border-slate-100">
                       <span className="text-slate-500">Date & Time:</span>
@@ -1219,7 +1220,7 @@ export const AdminView: React.FC<AdminViewProps> = ({
                     </div>
                     <div className="flex justify-between py-1 border-b border-slate-100">
                       <span className="text-slate-500">Telephone:</span>
-                      <span className="font-mono text-slate-800">{selectedReceiptPayment.phoneNumber}</span>
+                      <span className="font-mono text-slate-800">{selectedReceiptPayment.patientPhone}</span>
                     </div>
                     <div className="flex justify-between py-1 border-b border-slate-100">
                       <span className="text-slate-500">Payment Category:</span>
@@ -1227,7 +1228,15 @@ export const AdminView: React.FC<AdminViewProps> = ({
                     </div>
                     <div className="flex justify-between py-1 border-b border-slate-100">
                       <span className="text-slate-500">Channel / Method:</span>
-                      <span className="text-slate-800">{selectedReceiptPayment.paymentMethod}</span>
+                      <span className="text-slate-800 capitalize">
+                        {selectedReceiptPayment.paymentMethod === 'debit_card'
+                          ? 'Debit Card'
+                          : selectedReceiptPayment.paymentMethod === 'bank_transfer'
+                          ? 'Direct Bank Transfer'
+                          : selectedReceiptPayment.paymentMethod === 'ussd'
+                          ? 'USSD Code'
+                          : 'Hospital Desk'}
+                      </span>
                     </div>
                     <div className="flex justify-between py-2 border-t-2 border-slate-200 text-sm">
                       <span className="font-bold text-slate-900">Total Paid:</span>
@@ -1239,12 +1248,12 @@ export const AdminView: React.FC<AdminViewProps> = ({
                       <span className="text-slate-500">Hospital Status:</span>
                       <span
                         className={`font-semibold ${
-                          selectedReceiptPayment.status === 'Verified'
+                          selectedReceiptPayment.status === 'Successful'
                             ? 'text-emerald-700'
                             : 'text-amber-700'
                         }`}
                       >
-                        {selectedReceiptPayment.status}
+                        {selectedReceiptPayment.status === 'Successful' ? 'Verified / Cleared' : selectedReceiptPayment.status}
                       </span>
                     </div>
                   </div>
